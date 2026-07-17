@@ -1,3 +1,27 @@
+function char_to_hex(hex_char) {
+	var _c = hex_char;
+	var _letter_dict = {
+		a : 10, 
+		b : 11,
+		c : 12, 
+		d : 13,
+		e : 14, 
+		f : 15
+		}
+	
+	
+	if string_length(_c) > 1 {_c = string_char_at(hex_char, 1)};
+	
+	if string_digits(_c) == _c {
+		return real(_c)
+	}
+	else {
+		if struct_exists(_letter_dict, string_lower(_c)) {
+			return _letter_dict[$ string_lower(_c)];
+		}
+	}
+}
+
 function string_to_color(color_string){
 	switch color_string {
 		case "c_red":
@@ -31,8 +55,30 @@ function string_to_color(color_string){
         case "c_orange":
         case "orange":
             return c_orange
-		default:
+			
+		case "c_white":
+		case "white":
+		case "w": 
 			return c_white
+			
+		default:
+			if string_starts_with(color_string, "#") && string_length(color_string) == 7 {
+				
+				var _s = string_trim_start(color_string, ["#"])
+				var _l = string_length(_s);
+				var _col_dec = 0;
+				
+				for (var i=_l; i>=1; i--) {
+					var _c = string_char_at(_s, i)
+					var _digit_dec = char_to_hex(_c);
+					var _exp = i-((i+1) % 2)*2;
+					_col_dec += power(16, _exp) * _digit_dec;
+				}
+			
+				return _col_dec;
+				
+			}
+		return c_white;
 	}
 }
 function color_to_string(color){

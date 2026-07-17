@@ -24,38 +24,88 @@ if __temp_arg != "" {
     array_push(arg, __temp_arg)
 }
 
-if command == "s" || command == "sleep" { // sleep(frames)
-	if array_length(arg) > 0
-		pause = real(arg[0])
-	else
-		show_error("Command sleep recieved no arguments",true)
+#region Basic typer commands
+
+	/*	{sleep(frames)} : Pauses typing for a set amount of time.
+		 - frames (Real): The amount of time to pause for.
+	*/
+	if command == "s" || command == "sleep" { // sleep(frames)
+		if array_length(arg) > 0
+			pause = real(arg[0])
+		else
+			show_error("Command sleep recieved no arguments",true)
 	
-	looping = false
-}
-if command == "br" { // br() or br
-	chars ++
-}
-if command == "p" || command == "pause"  { // pause(frames)
-	pause = -1
-	looping = false
-    superskipping_buffer = 2
-}
-if command == "c" || command == "clear"  { // clear() OR clear
-	event_user(2)
-}
-if command == "e" || command == "end" { // end() OR end
-	event_user(3)
-}
-if command == "stop" { // stop() or stop
-	pause = -2
+		looping = false
+	}
+	
+	// {pause()} OR {pause} : Pauses typing until [CONFIRM] is pressed.
+	if command == "p" || command == "pause" {
+		pause = -1
+		looping = false
+	    superskipping_buffer = 2
+	}
+	
+	// {clear()} OR {clear} : Clears all previously written text. 
+	if command == "c" || command == "clear" {
+		event_user(2)
+	}
+	
+	// {break()} OR {break} : Performs a manual line break.
+	if command == "br" || command == "break" {
+		chars ++
+	}
+
+	// {end()} OR {end} : Ends dialogue. This command destroys the typer automatically.
+	if command == "e" || command == "end" { // end() OR end
+		event_user(3)
+	}
+	
+	// {stop()} OR {stop} : Stops the typer. This command does not automatically end the dialogue box, so you will have to deal with that manually.
+	if command == "stop" || command == "st" { // stop() or stop
+		pause = -2
     
-    looping = false
-    allow_skip_internal = false
-    skipping = false
-    superskipping = false
-}
+	    looping = false
+	    allow_skip_internal = false
+	    skipping = false
+	    superskipping = false
+	}
+
+#endregion
+
+#region Text formatting
+
+	/*	{col(val)} : Sets the color for text that's going to be typed.
+		 - val (String): The color to change text to.  
+	*/
+	if command == "col" || command == "color" || command == "colour" { // col(string) OR color(string)
+		saved_color = xcolor
+		xcolor = string_to_color(arg[0])
+		if arg[0] == "tired_aqua" 
+			xcolor = merge_color(c_aqua, c_blue, 0.3)
+	}
+	if command == "s_col" || command == "solid_col" || command = "solid_color" || command == "solid_colour" { // solid_col(bool)
+	    solid_color = string_to_bool(arg[0])
+	}
+	if command == "r_col" || command == "reset_col" || command == "reset_color" || command == "reset_colour" { // reset_col() OR reset_col
+		xcolor = saved_color
+	}
+	if command == "font" || command == "fnt" { // font(`string`) out of the localized fonts or a reference to an asset by its name
+		if loc_exists($"font_{arg[0]}")
+			font = loc_font(arg[0])
+		else
+			font = asset_get_index(arg[0])
+	}
+	if command == "shadow" || command == "sh" { // shadow(bool)
+		shadow = string_to_bool(arg[0])
+	}
+
+#endregion
+
+
+
 	
-if command == "auto_pauses" { // auto_pauses(bool)
+	
+if command == "auto_pauses" || command == "ap" { // auto_pauses(bool)
 	var __a = string(arg[0])
 	if __a == "true" 
 		|| __a == "false"
@@ -67,7 +117,7 @@ if command == "auto_pauses" { // auto_pauses(bool)
 	else
 		show_error("Command auto_pauses recieved a non-boolean argument", true)
 }
-if command == "auto_breaks" { // auto_breaks(bool)
+if command == "auto_breaks" || command == "abr" { // auto_breaks(bool)
 	var __a = string(arg[0])
 	if __a == "true" 
 		|| __a == "false"
@@ -79,21 +129,21 @@ if command == "auto_breaks" { // auto_breaks(bool)
 	else
 		show_error("Command auto_breaks recieved a non-boolean argument", true)
 }
-if command == "break_system" { // break_system(`language_id`)
+if command == "break_system" || command == "br_sys" { // break_system(`language_id`)
 	break_system = arg[0]
 }
 
-if command == "instant" { // instant(bool = true)
+if command == "instant" || command == "inst" || command == "i" { // instant(bool = true)
     var __arg = true
     if array_length(arg) > 0
         __arg = arg[0]
     
 	skipping = __arg
 }
-if command == "break_tabulation" { // break_tabulation(bool)
+if command == "break_tabulation" || command == "br_tab" { // break_tabulation(bool)
 	break_tabulation = string_to_bool(arg[0])
 }
-if command == "preset" { // preset(`type`) out of `enemy_text`, `god_text`, `light_world`
+if command == "preset" || command == "preset" { // preset(`type`) out of `enemy_text`, `god_text`, `light_world`
 	if arg[0] == "enemy_text" {
 		break_tabulation = false
 		font = loc_font("enc")
@@ -118,41 +168,21 @@ if command == "preset" { // preset(`type`) out of `enemy_text`, `god_text`, `lig
 		shadow = false
 	}
 }
-if command == "box_pos" { // box_pos(bool)
+if command == "box_pos" || command == "bpos" { // box_pos(bool)
     caller._reposition_self_to(arg[0])
     
     if instance_exists(face_inst)
         face_inst.y = y
 }
 
-if command == "col" || command == "color" { // col(string) OR color(string)
-	saved_color = xcolor
-	xcolor = string_to_color(arg[0])
-	if arg[0] == "tired_aqua" 
-		xcolor = merge_color(c_aqua, c_blue, 0.3)
-}
-if command == "solid_col" || command = "solid_color" { // solid_col(bool)
-    solid_color = string_to_bool(arg[0])
-}
-if command == "reset_col" { // reset_col() OR reset_col
-	xcolor = saved_color
-}
-if command == "font" { // font(`string`) out of the localized fonts or a reference to an asset by its name
-	if loc_exists($"font_{arg[0]}")
-		font = loc_font(arg[0])
-	else
-		font = asset_get_index(arg[0])
-}
-if command == "shadow" { // shadow(bool)
-	shadow = string_to_bool(arg[0])
-}
+	
 
 /// available effects:
 /// shake (power = 1.0)
 /// light_shake  --  will shake rarely as it's being rounded to the nearest round number. power equals to 0.51
 /// wave (power = 1.0, frequency = 4.0)
 
-if command == "eff" || command == "effect" { // eff(string, [effect_arguments])  assigns an effect to all symbols after the command is called until eff(reset) is called. all arguments are given as string type
+if command == "fx" || command == "eff" || command == "effect" { // eff(string, [effect_arguments])  assigns an effect to all symbols after the command is called until eff(reset) is called. all arguments are given as string type
     effect = string_lower(arg[0])
     
     // support older versions
@@ -168,51 +198,76 @@ if command == "eff" || command == "effect" { // eff(string, [effect_arguments]) 
         array_copy(effect_arguments, 0, arg, 1, array_length(arg) - 1)
     }
 }
-if command == "eff_reset" || command == "effect_reset" { // eff_reset(reset_arguments = true)  resets the current effect. if the argument is false, the effect_arguments will not be reset. true by default, though
+if command == "fx_r" || command == "eff_r" || command == "eff_reset" || command == "effect_reset" { // eff_reset(reset_arguments = true)  resets the current effect. if the argument is false, the effect_arguments will not be reset. true by default, though
     effect = undefined
     
     if array_length(arg) > 0 && !string_to_bool(arg[0])
         effect_arguments = []
 }
 
-if command == "god" { // god(bool)  whether it's god (gaster) text
+if command == "god" || command == "g" { // god(bool)  whether it's god (gaster) text
 	god = string_to_bool(arg[0])
 }
 
-if command == "link" || command == "npc_link" { // link(real, unlink_previous=bool, object=o_ow_npc)  you can link an npc to this and they will be animated when the text is playing (argument is npc id, second argument is true by default)
-	var o_link = real(arg[0])
-	var o = noone
-    var target = (array_length(arg) > 2 ? asset_get_index(arg[2]) : o_ow_npc)
+#region NPC linking commands
+
+	if command == "l" || command == "link" || command == "npc_link" { // link(real, unlink_previous=bool, object=o_ow_npc)  you can link an npc to this and they will be animated when the text is playing (argument is npc id, second argument is true by default)
+		var o_link = real(arg[0])
+		var o = noone
+	    var target = (array_length(arg) > 2 ? asset_get_index(arg[2]) : o_ow_npc)
     
-	with (target) {
-        if !variable_instance_exists(self, "link_id")
-            continue
-		if o_link == link_id
-			o = id
+		with (target) {
+	        if !variable_instance_exists(self, "link_id")
+	            continue
+			if o_link == link_id
+				o = id
+		}
+    
+		if array_length(arg) > 1 && arg[1] // unlink previous talk links
+	        talk_link = []
+		if !array_contains(talk_link, o)
+	        array_push(talk_link, o)
 	}
+	if command == "ul" || command == "unlink" || command == "npc_unlink" { // unlink(real)  you can link an npc to this and they will be animated when the text is playing (argument is npc id)
+	    var o_link = real(arg[0])
+		var o = noone
+		var target = (array_length(arg) > 2 ? asset_get_index(arg[2]) : o_ow_npc)
     
-	if array_length(arg) > 1 && arg[1] // unlink previous talk links
-        talk_link = []
-	if !array_contains(talk_link, o)
-        array_push(talk_link, o)
-}
-if command == "unlink" || command == "npc_unlink" { // unlink(real)  you can link an npc to this and they will be animated when the text is playing (argument is npc id)
-    var o_link = real(arg[0])
-	var o = noone
-	var target = (array_length(arg) > 2 ? asset_get_index(arg[2]) : o_ow_npc)
-    
-	with (target) {
-        if !variable_instance_exists(self, "link_id")
-            continue
-		if o_link == link_id
-			o = id
+		with (target) {
+	        if !variable_instance_exists(self, "link_id")
+	            continue
+			if o_link == link_id
+				o = id
+		}
+	
+		if array_contains(talk_link, o)
+	        array_delete(talk_link, array_get_index(talk_link, o), 1)
+	}
+
+	if command == "link_var_set" || command == "l_var" { // link_var_set(variable_name, value, is_real = false)
+	    for (var i = 0; i < array_length(talk_link); i ++) {
+	        if instance_exists(talk_link[i]) {
+	            var val = arg[1]
+	            if array_length(arg) > 2 && arg[2]
+	                val = real(val)
+            
+	            variable_instance_set(talk_link[i], arg[0], val)
+	        }
+            
+	    }
+	}
+	if command == "link_sprite_set" || command == "l_spr" { // link_sprite_set(sprite_name)
+	    for (var i = 0; i < array_length(talk_link); i ++) {
+	        var asset = asset_get_index(arg[0])
+	        if instance_exists(talk_link[i]) && asset != -1
+	            variable_instance_set(talk_link[i], "sprite_index", asset)
+	    }
 	}
 	
-	if array_contains(talk_link, o)
-        array_delete(talk_link, array_get_index(talk_link, o), 1)
-}
+#endregion
 
-if command == "choice" { // choice(`choice1`, `choice2`, ...)  create a choice box for the player
+
+if command == "chc" || command == "choice" { // choice(`choice1`, `choice2`, ...)  create a choice box for the player
     _facechange("none");
     text_typer_choicer(arg, id);
     
@@ -226,23 +281,23 @@ if command == "choice" { // choice(`choice1`, `choice2`, ...)  create a choice b
     allow_skip_internal = false
 }
 
-if command == "xscale" { // xscale(real)
+if command == "xscale" || command == "xsc" { // xscale(real)
 	xscale = real(arg[0])
 }
-if command == "yscale" { // yscale(real)
+if command == "yscale" || command == "ysc" { // yscale(real)
 	yscale = real(arg[0])
 }
-if command == "scale" { // scale(real)
+if command == "scale" || command == "sc" { // scale(real)
 	xscale = real(arg[0])
 	yscale = real(arg[0])
 }
-if command == "xspace" { // xspace(real)
+if command == "xspace" || command == "xsp" { // xspace(real)
 	xspace = real(arg[0])
 }
-if command == "yspace" { // yspace(real)
+if command == "yspace" || command == "ysp" { // yspace(real)
 	yspace = real(arg[0])
 }
-if command == "resetx" { // resetx() OR resetx  reset the x position of the typer
+if command == "resetx" || command == "rx" { // resetx() OR resetx  reset the x position of the typer
 	xoff = 0
 	chars ++
 }
@@ -281,7 +336,7 @@ if command == "sound" || command == "snd" { // snd(sound_index) OR sound(sound_i
         audio_play(snd)
 }
 
-if command == "can_skip" { // can_skip(bool)
+if command == "can_skip" || command == "skip" || command == "sk" { // can_skip(bool)
 	can_skip = string_to_bool(arg[0])
     if !can_skip {
         allow_skip_internal = false
@@ -292,7 +347,7 @@ if command == "can_skip" { // can_skip(bool)
         allow_skip_internal = true
     }
 }
-if command == "can_superskip" { // can_superskip(bool)
+if command == "can_superskip" || command == "superskip" || command == "ssk" { // can_superskip(bool)
 	can_superskip = string_to_bool(arg[0])
     if !can_superskip {
         allow_skip_internal = false
@@ -304,11 +359,11 @@ if command == "can_superskip" { // can_superskip(bool)
     }
 }
 
-if command == "speed" { // speed(real)
+if command == "speed" || command == "spd" { // speed(real)
 	typespd = real(arg[0])
 }
 
-if command == "char" { // char(`char_preset_string`, face_expression = undefined)  optional argument 1 for changing the expression - could be either the name of the expression or the index of it in the sprite
+if command == "character" || command == "char" || command == "ch" { // char(`char_preset_string`, face_expression = undefined)  optional argument 1 for changing the expression - could be either the name of the expression or the index of it in the sprite
 	var __exp = (array_length(arg) > 1 ? real(arg[1]) : 0)
     
     if arg[0] == char && array_length(arg) > 1 { // the user is misusing the char command. refer to face_ex (im crying)
@@ -337,17 +392,17 @@ if command == "char" { // char(`char_preset_string`, face_expression = undefined
     	looping = false
     }
 }
-if command == "face" { // face(`face_preset_string`, face_expression)  optional argument 1 for changing the expression - could be either the name of the expression or the index of it in the sprite
+if command == "face" || command == "f" { // face(`face_preset_string`, face_expression)  optional argument 1 for changing the expression - could be either the name of the expression or the index of it in the sprite
 	var __exp = (array_length(arg) > 1 ? real(arg[1]) : 0)
 	_facechange(arg[0], __exp)
 	looping = false
 }
-if command == "f_ex" || command == "face_ex" { // f_ex(string OR real) OR face_ex(string OR real)
+if command == "f_ex" || command == "face_ex" || command == "face_expression" { // f_ex(string OR real) OR face_ex(string OR real)
 	face_expression = arg[0]
     if string_length(face_expression) == string_length(string_digits(face_expression))
         face_expression = real(face_expression)
 }
-if command == "voice" { // voice(asset OR nil, pitch_range = undefined, interrupt = undefined, skip_frames = undefined)  write it with the `` things
+if command == "voice" || command == "v" { // voice(asset OR nil, pitch_range = undefined, interrupt = undefined, skip_frames = undefined)  write it with the `` things
     voice_pitchrange = undefined
     
 	if array_length(arg) > 0 {
@@ -367,7 +422,7 @@ if command == "voice" { // voice(asset OR nil, pitch_range = undefined, interrup
 		voice_skip = string_to_bool(arg[3])
 }
 
-if command == "pitch" { // pitch([val OR min], [max]) -- setting no arguments resets pitch
+if command == "pitch" || command == "pt" { // pitch([val OR min], [max]) -- setting no arguments resets pitch
 	if array_length(arg) > 0 {
 		if array_length(arg) == 1
 		{
@@ -383,7 +438,7 @@ if command == "pitch" { // pitch([val OR min], [max]) -- setting no arguments re
 	
 }
 
-if command == "mini" { // mini(`text`, char = undefined, face_expression = undefined, x = `auto`, y = `auto`)
+if command == "mini" || command == "m" { // mini(`text`, char = undefined, face_expression = undefined, x = `auto`, y = `auto`)
     draw_set_font(loc_font("main"))
     
     var __char = undefined
@@ -411,27 +466,8 @@ if command == "mini" { // mini(`text`, char = undefined, face_expression = undef
     );
 }
 
-if command == "link_var_set" { // link_var_set(variable_name, value, is_real = false)
-    for (var i = 0; i < array_length(talk_link); i ++) {
-        if instance_exists(talk_link[i]) {
-            var val = arg[1]
-            if array_length(arg) > 2 && arg[2]
-                val = real(val)
-            
-            variable_instance_set(talk_link[i], arg[0], val)
-        }
-            
-    }
-}
-if command == "link_sprite_set" { // link_sprite_set(sprite_name)
-    for (var i = 0; i < array_length(talk_link); i ++) {
-        var asset = asset_get_index(arg[0])
-        if instance_exists(talk_link[i]) && asset != -1
-            variable_instance_set(talk_link[i], "sprite_index", asset)
-    }
-}
 
-if command == "money_display" { // money_display(sell_type)      sell_type can be one of the following: "consumable", "weapon", "armor"
+if command == "money_display" || command == "mon" { // money_display(sell_type)      sell_type can be one of the following: "consumable", "weapon", "armor"
     var sell_type = ITEM_TYPE.CONSUMABLE
     switch arg[0] {
         case "consumable":
@@ -447,7 +483,7 @@ if command == "money_display" { // money_display(sell_type)      sell_type can b
     
     instance_create(o_ui_money_display,,,, {sell_type: sell_type})
 }
-if command == "money_display_hide" { // money_display_hide
+if command == "money_display_hide" || command == "mon_hide" { // money_display_hide
     instance_destroy(o_ui_money_display)
 }
 
